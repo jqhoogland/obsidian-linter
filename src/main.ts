@@ -1,19 +1,18 @@
-import {normalizePath, App, Editor, EventRef, MarkdownView, Menu, Modal, Notice, Plugin, PluginSettingTab, Setting, TAbstractFile, TFile, TFolder, addIcon} from 'obsidian';
-import {LinterSettings, getDisabledRules, rules} from './rules';
 import DiffMatchPatch from 'diff-match-patch';
-import dedent from 'ts-dedent';
-import {stripCr} from './utils/strings';
+import {YAMLException} from 'js-yaml';
 import log from 'loglevel';
-import {logInfo, logError, logDebug, setLogLevel} from './logger';
-import {moment} from 'obsidian';
+import {addIcon, App, Editor, EventRef, MarkdownView, Menu, Modal, moment, normalizePath, Notice, Plugin, PluginSettingTab, Setting, TAbstractFile, TFile, TFolder} from 'obsidian';
+import dedent from 'ts-dedent';
+import {iconInfo} from './icons';
+import {logDebug, logError, logInfo, setLogLevel} from './logger';
+import {getDisabledRules, LinterSettings, rules} from './rules';
 import './rules-registry';
 import EscapeYamlSpecialCharacters from './rules/escape-yaml-special-characters';
 import FormatTagsInYaml from './rules/format-tags-in-yaml';
-import YamlTimestamp from './rules/yaml-timestamp';
-import YamlKeySort from './rules/yaml-key-sort';
 import {RuleBuilderBase} from './rules/rule-builder';
-import {iconInfo} from './icons';
-import {YAMLException} from 'js-yaml';
+import YamlKeySort from './rules/yaml-key-sort';
+import YamlTimestamp from './rules/yaml-timestamp';
+import {stripCr} from './utils/strings';
 
 declare global {
   // eslint-disable-next-line no-unused-vars
@@ -31,12 +30,12 @@ declare module 'obsidian' {
   // eslint-disable-next-line no-unused-vars
   interface App {
     commands: {
-        executeCommandById(id: string): void;
-        commands: {
-            'editor:save-file': {
-                callback(): void;
-            };
+      executeCommandById(id: string): void;
+      commands: {
+        'editor:save-file': {
+          callback(): void;
         };
+      };
     };
   }
 }
@@ -104,7 +103,7 @@ export default class LinterPlugin extends Plugin {
         const startMessage = 'This will edit all of your files and may introduce errors.';
         const submitBtnText = 'Lint All';
         const submitBtnNoticeText = 'Linting all files...';
-        new LintConfirmationModal(this.app, startMessage, submitBtnText, submitBtnNoticeText, () =>{
+        new LintConfirmationModal(this.app, startMessage, submitBtnText, submitBtnNoticeText, () => {
           return this.runLinterAllFiles(this.app);
         }).open();
       },
@@ -184,7 +183,7 @@ export default class LinterPlugin extends Plugin {
       displayChanged: true,
       foldersToIgnore: [],
       linterLocale: 'system-default',
-      logLevel: log.levels.ERROR,
+      logLevel: log.levels.ERROR, // TODO: Make note in contributor docs about this.
     };
     const data = await this.loadData();
     const storedSettings = data || {};
@@ -322,14 +321,14 @@ export default class LinterPlugin extends Plugin {
         } catch (error) {
           this.handleLintError(file, error, 'There is an error in the yaml of file \'${file.path}\': ', 'Lint All Files Error in File \'${file.path}\'');
 
-          numberOfErrors+=1;
+          numberOfErrors += 1;
         }
       }
     }));
     if (numberOfErrors === 0) {
       new Notice('Linted all files');
     } else {
-      const amountOfErrorsMessage = numberOfErrors === 1 ? 'was 1 error': 'were ' + numberOfErrors + ' errors';
+      const amountOfErrorsMessage = numberOfErrors === 1 ? 'was 1 error' : 'were ' + numberOfErrors + ' errors';
       new Notice('Linted all files and there ' + amountOfErrorsMessage + '.');
     }
   }
@@ -347,7 +346,7 @@ export default class LinterPlugin extends Plugin {
         } catch (error) {
           this.handleLintError(file, error, 'There is an error in the yaml of file \'${file.path}\': ', 'Lint All Files in Folder Error in File \'${file.path}\'');
 
-          numberOfErrors+=1;
+          numberOfErrors += 1;
         }
 
         lintedFiles++;
@@ -356,7 +355,7 @@ export default class LinterPlugin extends Plugin {
     if (numberOfErrors === 0) {
       new Notice('Linted all ' + lintedFiles + ' files in ' + folder.name + '.');
     } else {
-      const amountOfErrorsMessage = numberOfErrors === 1 ? 'was 1 error': 'were ' + numberOfErrors + ' errors';
+      const amountOfErrorsMessage = numberOfErrors === 1 ? 'was 1 error' : 'were ' + numberOfErrors + ' errors';
       new Notice('Linted all ' + lintedFiles + ' files in ' + folder.name + ' and there ' + amountOfErrorsMessage + '.');
     }
   }
@@ -519,7 +518,7 @@ class SettingTab extends PluginSettingTab {
         prevSection = rule.type;
       }
 
-      containerEl.createEl('h3', {}, (el) =>{
+      containerEl.createEl('h3', {}, (el) => {
         el.innerHTML = `<a href="${rule.getURL()}">${rule.name}</a>`;
       });
 
